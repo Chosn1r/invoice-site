@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>請求書</title>
+
+<style>
+/* ===== 全局重置 & 打印控制 ===== */
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+body {
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, "Helvetica Neue", Arial, sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    padding: 30px 20px;
+    box-sizing: border-box;
+    line-height: 1.5;
+    color: #1e293b;
+}
+
+/* 卡片容器 */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    padding: 24px 28px;
+    margin-bottom: 30px;
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+}
+
+h1.title {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 600;
+    margin: 0 0 30px 0;
+    letter-spacing: 1px;
+    color: #0f172a;
+}
+
+h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    padding-left: 12px;
+    border-left: 5px solid #2563eb;
+    color: #0f172a;
+}
+
+.form-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    gap: 12px;
+}
+
+.form-row label {
+    width: 140px;
+    font-weight: 500;
+    padding-top: 8px;
+    color: #334155;
+    font-size: 14px;
+}
+
+input, select, textarea {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    color: #1e293b;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+/* 取引先情報行 - 特殊布局 */
+.client-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.client-name-wrapper {
+    flex: 3;
+    display: flex;
+    gap: 12px;
+    position: relative;
+}
+
+#clientName {
+    flex: 2;
+    height: 60px;
+    padding: 10px 14px;
+    box-sizing: border-box;
+    font-size: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    resize: vertical;
+}
+
+.suffix-select {
+    width: 100px;
+    height: 60px;
+    padding: 10px 14px;
+    box-sizing: border-box;
+    font-size: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background-color: white;
+    cursor: pointer;
+}
+
+.client-address-wrapper {
+    flex: 2;
+}
+
+#clientAddress {
+    width: 100%;
+    height: 60px;
+    padding: 10px 14px;
+    box-sizing: border-box;
+    font-size: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    resize: vertical;
+}
+
+/* 下拉列表通用样式 */
+.company-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.05);
+    display: none;
+}
+
+.company-dropdown.active {
+    display: block;
+}
+
+.company-dropdown-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background-color 0.2s;
+}
+
+.company-dropdown-item:hover {
+    background-color: #f8fafc;
+}
+
+.company-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.company-dropdown-item .company-name {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.company-dropdown-item .company-detail {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 其他输入框保持原有样式 */
+.form-row input, .form-row select, .form-row textarea {
+    height: auto;
+    min-height: auto;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    border: 1px solid #e2e8f0;
+    padding: 12px 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* 商品明细表格的删除按钮样式 */
+.delete-btn {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+    background-color: #dc2626;
+}
+
+/* 商品明细表格的输入框样式 */
+#itemTable input[type="number"],
+#itemTable input[type="text"],
+#itemTable select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.right {
+    width: 100%;
+    margin-top: 20px;
+    text-align: right;
+    padding-right: 10px;
+    font-size: 16px;
+    color: #334155;
+}
+
+.right strong {
+    color: #0f172a;
+}
+
+/* ===== 請求書本体 ===== */
+.invoice {
+    width: 100%;
+    max-width: 100%;
+    margin: 40px auto;
+    background: #fff;
+    border: 2px solid #1e293b;
+    border-radius: 24px;
+    padding: 30px 35px;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 1.5;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.invoice h1.title {
+    font-size: 34px;
+    margin-top: 0;
+    margin-bottom: 24px;
+    letter-spacing: 2px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 30px;
+    margin-bottom: 24px;
+}
+
+.box {
+    flex: 2;
+    min-width: 200px;
+}
+
+.client-name-line {
+    font-size: 18px;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.client-suffix {
+    font-size: 15px;
+    color: #475569;
+    margin-left: 5px;
+}
+
+.company-info {
+    position: relative;
+    padding-right: 2.8cm;
+    margin-left: auto;
+    width: auto;
+    max-width: 55%;
+    background: #fff;
+    word-break: break-word;
+    text-align: left;
+}
+
+/* 公司详细信息通用紧凑样式 */
+.company-details {
+    line-height: 1.3;
+    margin: 0;
+}
+
+/* 我方会社信息中的地址继承父级行高，保持间距一致 */
+.company-details .address-wrap {
+    line-height: inherit;
+    margin-bottom: 0;
+}
+
+.stamp {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 2.2cm;
+    height: 2.2cm;
+    object-fit: contain;
+    border: 1px solid #94a3b8;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-radius: 8px;
+}
+
+.address-wrap {
+    display: block;
+    word-break: break-all;
+    line-height: 1.6;
+    margin-bottom: 4px;
+    white-space: pre-wrap;
+}
+
+.amount-box {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 20px 0 15px;
+    background: #f1f5f9;
+    padding: 12px 20px;
+    border-left: 6px solid #2563eb;
+    border-radius: 0 12px 12px 0;
+    color: #0f172a;
+}
+
+.summary-area {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    margin: 20px 0;
+}
+
+.summary-box {
+    width: 280px;
+    background: #f8fafc;
+    padding: 16px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 16px;
+    color: #334155;
+}
+
+.summary-row span:last-child {
+    min-width: 120px;
+    text-align: right;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* 预览区域：隐藏表格，显示卡片容器 */
+#invoiceTable {
+    display: none;
+}
+
+#invoiceItems {
+    display: block;
+    margin: 20px 0;
+}
+
+/* 卡片列表样式（屏幕与打印共享） */
+.invoice-items {
+    width: 100%;
+}
+
+.invoice-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+    page-break-inside: avoid; /* 打印时防止卡片内分页 */
+}
+
+.invoice-item.header {
+    font-weight: 700;
+    background: #f1f5f9;
+    padding: 10px 0;
+    border-bottom: 2px solid #94a3b8;
+    margin-bottom: 4px;
+}
+
+.invoice-item span {
+    padding: 0 8px;
+}
+
+/* 单价、数量、价格右对齐 */
+.invoice-item span:nth-child(2),
+.invoice-item span:nth-child(3),
+.invoice-item span:nth-child(4) {
+    text-align: right;
+}
+
+/* 表头对齐与数据行一致 */
+.invoice-item.header span:first-child {
+    text-align: left;
+}
+.invoice-item.header span:nth-child(2),
+.invoice-item.header span:nth-child(3),
+.invoice-item.header span:nth-child(4) {
+    text-align: right;
+}
+
+#i_bank, #i_remark {
+    display: block;
+    background: #f8fafc;
+    padding: 12px 16px;
+    border: 1px dashed #94a3b8;
+    margin: 10px 0 20px;
+    border-radius: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+hr {
+    margin: 24px 0;
+    border: none;
+    border-top: 2px solid #e2e8f0;
+}
+
+/* ===== 按钮样式 ===== */
+button {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 40px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin: 8px 10px 0 0;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    display: inline-block;
+}
+
+button:hover {
+    background: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+}
+
+button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(37,99,235,0.2);
+}
+
+button.secondary {
+    background: #f1f5f9;
+    color: #1e293b;
+    box-shadow: none;
+}
+button.secondary:hover {
+    background: #e2e8f0;
+}
+
+/* ===== 打印专用 ===== */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+    .card {
+        background: none;
+        box-shadow: none;
+        padding: 0;
+        margin: 0;
+    }
+    button {
+        display: none;
+    }
+    body * {
+        visibility: hidden;
+    }
+    #invoice, #invoice * {
+        visibility: visible;
+    }
+    #invoice {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        border: none;
+        padding: 20px 20px 10px 20px;
+        margin: 0;
+        background: #fff;
+        font-size: 13px;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    /* 顶部“請求書”标题保持原粗（600） */
+    #invoice h1.title {
+        font-weight: 600;
+        font-size: 26px;
+        margin-bottom: 16px;
+    }
+
+    /* ===== 客户名称行统一样式 ===== */
+    #invoice .client-name-line {
+        font-size: 13pt; /* 与整体字体大小一致 */
+        font-weight: normal;
+    }
+    #invoice .client-name-line strong,
+    #invoice .client-name-line .client-suffix,
+    #invoice #i_myCompany {
+        font-weight: 500;
+        color: #000; /* 打印时统一黑色 */
+        font-size: inherit; /* 继承父元素大小 */
+    }
+
+    /* ご請求金額加粗 */
+    #invoice .amount-box,
+    #invoice .amount-box span {
+        font-weight: 700;
+    }
+
+    /* 压缩金额框 */
+    #invoice .amount-box {
+        font-size: 18px;
+        margin: 8px 0 10px;
+        padding: 6px 16px;
+        background: none;
+        border-left: 4px solid #333;
+    }
+
+    /* 压缩摘要区域 */
+    #invoice .summary-box {
+        padding: 6px 12px;
+        font-size: 11pt;
+        background: none;
+        border: 1px solid #333;
+    }
+    #invoice .summary-row {
+        margin-bottom: 3px;
+        font-size: 11pt;
+    }
+    #invoice .summary-row span:last-child {
+        min-width: 100px;
+    }
+
+    /* 压缩分隔线上下间距 */
+    #invoice hr {
+        margin: 10px 0;
+    }
+
+    /* 进一步压缩卡片列表行高和字体 */
+    .invoice-item {
+        padding: 3px 0;
+        font-size: 9.5pt;
+    }
+    .invoice-item.header {
+        padding: 5px 0;
+        font-weight: 700;
+        background: #ddd !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* 确保卡片列表不跨页断裂 */
+    .invoice-item {
+        page-break-inside: avoid;
+    }
+
+    /* 压缩备注和银行信息区域 */
+    #i_bank, #i_remark {
+        padding: 6px 10px;
+        margin: 6px 0 12px;
+        font-size: 10pt;
+        background: none;
+        border: 1px dashed #333;
+    }
+
+    /* 调整整体字体 */
+    #invoice {
+        font-size: 11pt;
+    }
+}
+
+#subTotal, #taxTotal, #grandTotal, #displayTotal {
+    font-weight: 700;
+    color: #0f172a;
+}
+</style>
+</head>
+<body>
+
+<h1 class="title">請求書</h1>
+
+<!-- 取引先情報 卡片 -->
+<div class="card">
+    <h3>取引先情報</h3>
+    <div class="client-row">
+        <div class="client-name-wrapper">
+            <input id="clientName" placeholder="会社名／個人名" autocomplete="off">
+            <select id="clientSuffix" class="suffix-select">
+                <option value="御中" selected>御中</option>
+                <option value="様">様</option>
+            </select>
+            <div id="clientDropdown" class="company-dropdown"></div>
+        </div>
+        <div class="client-address-wrapper">
+            <textarea id="clientAddress" placeholder="住所" rows="2"></textarea>
+        </div>
+    </div>
+    <button onclick="saveClientInfo()">取引先情報を保存</button>
+    <button onclick="manageClientList()">保存済取引先を管理</button>
+</div>
+
+<!-- 請求書情報 卡片 -->
+<div class="card">
+    <h3>請求書情報</h3>
+    <div class="form-row">
+        <label>請求書番号</label>
+        <input id="invoiceNo" autocomplete="off">
+    </div>
+    <div class="form-row">
+        <label>請求日</label>
+        <input type="date" id="invoiceDate">
+    </div>
+    <div class="form-row">
+        <label>支払い期限</label>
+        <input type="date" id="dueDate">
+    </div>
+    <div class="form-row">
+        <label>画像アップロード</label>
+        <input type="file" id="imageUpload" accept="image/*">
+    </div>
+    <div>
+        <canvas id="cropCanvas" style="border:1px solid #e2e8f0; border-radius:12px; max-width:300px;"></canvas><br>
+        <button onclick="cropImage()">会社ロゴ確認</button>
+    </div>
+    <div class="amount-box">
+        ご請求金額：<span id="displayTotal">0円</span>
+    </div>
+</div>
+
+<!-- 商品明細 卡片 -->
+<div class="card">
+    <h3>商品明細</h3>
+    <table id="itemTable">
+        <tr>
+            <th>商品名</th>
+            <th>単価</th>
+            <th>数量</th>
+            <th>消費税</th>
+            <th>価格</th>
+            <th>操作</th>
+        </tr>
+    </table>
+    <button onclick="addRow()">＋ 商品追加</button>
+    <div class="right">
+        小計：<span id="subTotal">0円</span><br>
+        消費税：<span id="taxTotal">0円</span><br>
+        <strong>合計：<span id="grandTotal">0円</span></strong>
+    </div>
+</div>
+
+<!-- 我方会社情報 卡片 -->
+<div class="card">
+    <h3>我方会社情報</h3>
+    <div class="form-row" style="position: relative;">
+        <label>会社名</label>
+        <input id="myCompany" placeholder="" autocomplete="off">
+        <div id="myCompanyDropdown" class="company-dropdown"></div>
+    </div>
+    <div class="form-row">
+        <label>登録番号</label>
+        <input id="regNumber">
+    </div>
+    <div class="form-row">
+        <label>住所</label>
+        <textarea id="myAddress" placeholder="" rows="2"></textarea>
+    </div>
+    <div class="form-row">
+        <label>電話</label>
+        <input id="myPhone">
+    </div>
+    <div class="form-row">
+        <label>振込先</label>
+        <textarea id="bankInfo" placeholder="" rows="2"></textarea>
+    </div>
+    <div class="form-row" style="margin-top:20px;">
+        <label>備考</label>
+        <textarea id="remark" rows="3" style="flex:1;"></textarea>
+    </div>
+    <br>
+    <button onclick="saveCompanyInfo()">会社情報を保存</button>
+    <button onclick="manageCompanyList()">保存済み会社を管理</button>
+</div>
+
+<br>
+<button onclick="createInvoice()">請求書を反映</button>
+<button onclick="downloadPDF()">PDF保存</button>
+
+<!-- 請求書プレビュー -->
+<div id="invoice" class="invoice">
+    <h1 class="title">請求書</h1>
+    <div class="header">
+        <div class="box">
+            <div class="client-name-line">
+                <strong id="i_client"></strong>
+                <span id="i_clientSuffix" class="client-suffix"></span>
+            </div>
+            <span id="i_clientAddress" class="address-wrap"></span><br>
+        </div>
+        <div class="company-info">
+            <!-- 公司名与注册号（紧密，之后空一行） -->
+            <div class="company-details">
+                <strong id="i_myCompany"></strong><br>
+                登録番号：<span id="i_reg"></span>
+            </div>
+            <br>
+            <!-- 地址与电话（地址内容可能多行，电话紧接地址最后一行，无空行） -->
+            <div class="company-details">
+                <span id="i_myAddress" class="address-wrap"></span>
+                TEL：<span id="i_phone"></span>
+            </div>
+            <br>
+            <!-- 请求书番号等信息 -->
+            請求書番号：<span id="i_no"></span><br>
+            請求日：<span id="i_date"></span><br>
+            支払い期限：<span id="i_due"></span>
+            <img id="i_image" class="stamp" alt="印">
+        </div>
+    </div>
+    <hr>
+    <div class="amount-box">
+        ご請求金額：<span id="i_displayTotal"></span>
+    </div>
+    <!-- 表格已隐藏，仅用于数据传递（保留但不显示） -->
+    <table id="invoiceTable">
+        <tr>
+            <th>商品名</th>
+            <th>単価</th>
+            <th>数量</th>
+            <th>価格</th>
+        </tr>
+    </table>
+    <!-- 商品卡片容器（默认显示） -->
+    <div id="invoiceItems" class="invoice-items"></div>
+    <hr>
+    <div class="summary-area">
+        <div class="summary-box">
+            <div class="summary-row">
+                <span>小計：</span>
+                <span id="i_sub"></span>
+            </div>
+            <div class="summary-row">
+                <span>消費税：</span>
+                <span id="i_tax"></span>
+            </div>
+            <div class="summary-row" style="font-weight:bold;">
+                <span>合計：</span>
+                <span id="i_total"></span>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <strong>振込先</strong><br>
+    <span id="i_bank" style="white-space: pre-wrap;"></span>
+    <br><br>
+    <strong>備考</strong><br>
+    <span id="i_remark" class="address-wrap"></span>
+</div>
+
+<script>
+let originalImage = new Image();
+let cropCanvas = document.getElementById("cropCanvas");
+let ctx = cropCanvas.getContext("2d");
+
+document.getElementById("imageUpload").addEventListener("change", function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event){
+        originalImage.onload = function(){
+            const maxSize = 300;
+            let width = originalImage.width;
+            let height = originalImage.height;
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
+            }
+            cropCanvas.width = width;
+            cropCanvas.height = height;
+            ctx.drawImage(originalImage, 0, 0, width, height);
+        }
+        originalImage.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+function cropImage(){
+    const size = 83;
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = size;
+    tempCanvas.height = size;
+    const tctx = tempCanvas.getContext("2d");
+    tctx.drawImage(cropCanvas, 0, 0, size, size);
+    document.getElementById("i_image").src = tempCanvas.toDataURL("image/png");
+}
+
+function yen(num){
+    return (num || 0).toLocaleString("ja-JP") + "円";
+}
+
+function calculate(){
+    const itemTable = document.getElementById('itemTable');
+    let sub=0, tax=0;
+    [...itemTable.rows].slice(1).forEach(r=>{
+        const p=+r.querySelector(".price")?.value || 0;
+        const q=+r.querySelector(".qty")?.value || 0;
+        const t=+r.querySelector(".tax")?.value || 0;
+        const a=p*q;
+        r.querySelector(".amount").textContent=yen(a);
+        sub+=a;
+        tax+=Math.floor(a*t);
+    });
+    document.getElementById('subTotal').textContent=yen(sub);
+    document.getElementById('taxTotal').textContent=yen(tax);
+    const total=sub+tax;
+    document.getElementById('grandTotal').textContent=yen(total);
+    document.getElementById('displayTotal').textContent=yen(total);
+}
+
+function addRow(){
+    const itemTable = document.getElementById('itemTable');
+    const r = itemTable.insertRow();
+    r.innerHTML = `
+    <td><input class="name" type="text" placeholder="商品名"></td>
+    <td><input type="number" class="price" min="0" placeholder="0"></td>   
+    <td><input type="number" class="qty" min="1" placeholder="1"></td>
+    <td>
+        <select class="tax">
+            <option value="0.08">8%</option>
+            <option value="0.10" selected>10%</option>
+        </select>
+    </td>
+    <td class="amount">0円</td>
+    <td><button class="delete-btn" onclick="deleteRow(this)">削除</button></td>`;
+    r.querySelectorAll("input,select").forEach(e => e.oninput = calculate);
+}
+
+// 削除機能
+function deleteRow(btn){
+    const row = btn.closest('tr');
+    const itemTable = document.getElementById('itemTable');
+    if(row && itemTable.rows.length > 1) {
+        row.remove();
+        calculate();
+    } else {
+        alert('少なくとも1つの商品行が必要です。');
+    }
+}
+
+// ========== 取引先情報の保存・選択機能 ==========
+
+// 保存
+function saveClientInfo() {
+    const name = document.getElementById('clientName').value.trim();
+    if(!name) {
+        alert('会社名／個人名を入力してください。');
+        return;
+    }
+    
+    const clientData = {
+        id: Date.now(),
+        name: name,
+        suffix: document.getElementById('clientSuffix').value,
+        address: document.getElementById('clientAddress').value,
+        savedDate: new Date().toLocaleString('ja-JP')
+    };
+    
+    let clients = getClientList();
+    
+    // 同じ名前が存在するか確認
+    const existingIndex = clients.findIndex(c => c.name === clientData.name);
+    if(existingIndex !== -1) {
+        if(!confirm('同じ名前が既に保存されています。上書きしますか？')) {
+            return;
+        }
+        clients.splice(existingIndex, 1);
+    }
+    
+    clients.push(clientData);
+    localStorage.setItem('clientList', JSON.stringify(clients));
+    alert('取引先情報を保存しました。\n会社名をクリックすると選択できます。');
+    // 保存后关闭下拉列表（可选）
+    document.getElementById('clientDropdown').classList.remove('active');
+}
+
+// リスト取得
+function getClientList() {
+    const saved = localStorage.getItem('clientList');
+    return saved ? JSON.parse(saved) : [];
+}
+
+// ドロップダウン表示
+function showClientDropdown() {
+    const clients = getClientList();
+    const dropdown = document.getElementById('clientDropdown');
+    
+    if(clients.length === 0) {
+        dropdown.innerHTML = '<div class="company-dropdown-item" style="color:#64748b;">保存済み取引先はありません</div>';
+        dropdown.classList.add('active');
+        return;
+    }
+    
+    clients.sort((a, b) => b.id - a.id); // 新しい順
+    
+    let html = '';
+    clients.forEach(c => {
+        html += `
+            <div class="company-dropdown-item" onclick="selectClient(${c.id})">
+                <div class="company-name">${escapeHtml(c.name)}</div>
+                <div class="company-detail">
+                    ${escapeHtml(c.suffix)} | 
+                    ${escapeHtml(c.address ? c.address.substring(0, 20) + (c.address.length > 20 ? '…' : '') : '住所なし')}
+                </div>
+            </div>
+        `;
+    });
+    
+    dropdown.innerHTML = html;
+    dropdown.classList.add('active');
+}
+
+// 選択
+function selectClient(id) {
+    const clients = getClientList();
+    const client = clients.find(c => c.id === id);
+    
+    if(client) {
+        document.getElementById('clientName').value = client.name || '';
+        document.getElementById('clientSuffix').value = client.suffix || '御中';
+        document.getElementById('clientAddress').value = client.address || '';
+    }
+    
+    document.getElementById('clientDropdown').classList.remove('active');
+}
+
+// 管理（簡易削除）
+function manageClientList() {
+    const clients = getClientList();
+    
+    if(clients.length === 0) {
+        alert('保存済みの取引先はありません。');
+        return;
+    }
+    
+    let message = '保存済み取引先一覧：\n\n';
+    clients.forEach((c, index) => {
+        message += `${index + 1}. ${c.name} (${c.suffix})\n`;
+    });
+    message += '\n削除する番号を入力してください（キャンセルで終了）';
+    
+    const input = prompt(message);
+    if(input === null) return;
+    
+    const index = parseInt(input) - 1;
+    if(index >= 0 && index < clients.length) {
+        if(confirm(`「${clients[index].name}」を削除しますか？`)) {
+            clients.splice(index, 1);
+            localStorage.setItem('clientList', JSON.stringify(clients));
+            alert('削除しました。');
+        }
+    } else {
+        alert('無効な番号です。');
+    }
+}
+
+// ========== 我方会社情報の保存・選択機能 ==========
+
+function saveCompanyInfo(){
+    const myCompany = document.getElementById('myCompany');
+    if(!myCompany.value.trim()) {
+        alert('会社名を入力してください。');
+        return;
+    }
+    
+    const companyData = {
+        id: Date.now(),
+        myCompany: myCompany.value,
+        regNumber: document.getElementById('regNumber').value,
+        myAddress: document.getElementById('myAddress').value,
+        myPhone: document.getElementById('myPhone').value,
+        bankInfo: document.getElementById('bankInfo').value,
+        remark: document.getElementById('remark').value,
+        savedDate: new Date().toLocaleString('ja-JP')
+    };
+    
+    let companies = getCompanyList();
+    
+    const existingIndex = companies.findIndex(c => c.myCompany === companyData.myCompany);
+    if(existingIndex !== -1) {
+        if(!confirm('同じ会社名が既に保存されています。上書きしますか？')) {
+            return;
+        }
+        companies.splice(existingIndex, 1);
+    }
+    
+    companies.push(companyData);
+    localStorage.setItem("companyList", JSON.stringify(companies));
+    
+    alert('我方会社情報を保存しました。\n会社名をクリックすると選択できます。');
+    document.getElementById('myCompanyDropdown').classList.remove('active');
+}
+
+function getCompanyList() {
+    const saved = localStorage.getItem("companyList");
+    return saved ? JSON.parse(saved) : [];
+}
+
+function showCompanyDropdown() {
+    const companies = getCompanyList();
+    const dropdown = document.getElementById('myCompanyDropdown');
+    
+    if(companies.length === 0) {
+        dropdown.innerHTML = '<div class="company-dropdown-item" style="color:#64748b;">保存済み会社はありません</div>';
+        dropdown.classList.add('active');
+        return;
+    }
+    
+    companies.sort((a, b) => b.id - a.id);
+    
+    let html = '';
+    companies.forEach(company => {
+        html += `
+            <div class="company-dropdown-item" onclick="selectCompany(${company.id})">
+                <div class="company-name">${escapeHtml(company.myCompany)}</div>
+                <div class="company-detail">
+                    ${escapeHtml(company.regNumber || '登録番号なし')} | 
+                    ${escapeHtml(company.myPhone || '電話なし')}
+                </div>
+            </div>
+        `;
+    });
+    
+    dropdown.innerHTML = html;
+    dropdown.classList.add('active');
+}
+
+function selectCompany(id) {
+    const companies = getCompanyList();
+    const company = companies.find(c => c.id === id);
+    
+    if(company) {
+        document.getElementById('myCompany').value = company.myCompany || '';
+        document.getElementById('regNumber').value = company.regNumber || '';
+        document.getElementById('myAddress').value = company.myAddress || '';
+        document.getElementById('myPhone').value = company.myPhone || '';
+        document.getElementById('bankInfo').value = company.bankInfo || '';
+        document.getElementById('remark').value = company.remark || '';
+    }
+    
+    document.getElementById('myCompanyDropdown').classList.remove('active');
+}
+
+function manageCompanyList() {
+    const companies = getCompanyList();
+    
+    if(companies.length === 0) {
+        alert('保存済みの会社はありません。');
+        return;
+    }
+    
+    let message = '保存済み会社一覧：\n\n';
+    companies.forEach((c, index) => {
+        message += `${index + 1}. ${c.myCompany} (${c.regNumber || '登録番号なし'})\n`;
+    });
+    message += '\n削除する番号を入力してください（キャンセルで終了）';
+    
+    const input = prompt(message);
+    if(input === null) return;
+    
+    const index = parseInt(input) - 1;
+    if(index >= 0 && index < companies.length) {
+        if(confirm(`「${companies[index].myCompany}」を削除しますか？`)) {
+            companies.splice(index, 1);
+            localStorage.setItem("companyList", JSON.stringify(companies));
+            alert('削除しました。');
+        }
+    } else {
+        alert('無効な番号です。');
+    }
+}
+
+// HTMLエスケープ（XSS対策）
+function escapeHtml(text) {
+    if(!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ドロップダウンをクリック以外で閉じる
+document.addEventListener('click', function(e) {
+    // 取引先用
+    const clientDropdown = document.getElementById('clientDropdown');
+    const clientInput = document.getElementById('clientName');
+    if(clientInput && !clientInput.contains(e.target) && !clientDropdown.contains(e.target)) {
+        clientDropdown.classList.remove('active');
+    }
+    
+    // 我方会社用
+    const myDropdown = document.getElementById('myCompanyDropdown');
+    const myInput = document.getElementById('myCompany');
+    if(myInput && !myInput.contains(e.target) && !myDropdown.contains(e.target)) {
+        myDropdown.classList.remove('active');
+    }
+});
+
+// 取引先 会社名入力欄フォーカス
+document.getElementById('clientName').addEventListener('focus', function() {
+    showClientDropdown();
+});
+
+// 我方会社 会社名入力欄フォーカス
+document.getElementById('myCompany').addEventListener('focus', function() {
+    showCompanyDropdown();
+});
+
+// ESCキーで閉じる
+document.getElementById('clientName').addEventListener('keydown', function(e) {
+    if(e.key === 'Escape') {
+        document.getElementById('clientDropdown').classList.remove('active');
+    }
+});
+document.getElementById('myCompany').addEventListener('keydown', function(e) {
+    if(e.key === 'Escape') {
+        document.getElementById('myCompanyDropdown').classList.remove('active');
+    }
+});
+
+function createInvoice(){
+    calculate();
+    document.getElementById('i_client').textContent = document.getElementById('clientName').value;
+    document.getElementById('i_clientSuffix').textContent = document.getElementById('clientSuffix').value;
+    document.getElementById('i_clientAddress').textContent = document.getElementById('clientAddress').value;
+    document.getElementById('i_myCompany').textContent = document.getElementById('myCompany').value;
+    document.getElementById('i_reg').textContent = document.getElementById('regNumber').value;
+    document.getElementById('i_myAddress').textContent = document.getElementById('myAddress').value;
+    document.getElementById('i_phone').textContent = document.getElementById('myPhone').value;
+    document.getElementById('i_no').textContent = document.getElementById('invoiceNo').value;
+    document.getElementById('i_date').textContent = document.getElementById('invoiceDate').value;
+    document.getElementById('i_due').textContent = document.getElementById('dueDate').value;
+    document.getElementById('i_displayTotal').textContent = document.getElementById('displayTotal').textContent;
+
+    // 仍然填充表格（虽然隐藏，但可能被其他逻辑依赖）
+    const invoiceTable = document.getElementById('invoiceTable');
+    invoiceTable.innerHTML = `<tr>
+    <th>商品名</th><th>単価</th><th>数量</th><th>価格</th></tr>`;
+
+    const itemTable = document.getElementById('itemTable');
+    [...itemTable.rows].slice(1).forEach(r=>{
+        invoiceTable.insertRow().innerHTML = `
+        <td>${escapeHtml(r.querySelector(".name").value)}</td>
+        <td>${yen(+r.querySelector(".price").value)}</td>
+        <td>${r.querySelector(".qty").value}</td>
+        <td>${r.querySelector(".amount").textContent}</td>`;
+    });
+
+    // ----- 生成打印用的卡片式商品列表 -----
+    const invoiceItems = document.getElementById('invoiceItems');
+    invoiceItems.innerHTML = ''; // 清空
+
+    // 创建表头
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'invoice-item header';
+    headerDiv.innerHTML = `
+        <span>商品名</span>
+        <span>単価</span>
+        <span>数量</span>
+        <span>価格</span>
+    `;
+    invoiceItems.appendChild(headerDiv);
+
+    // 遍历商品行，生成卡片
+    [...itemTable.rows].slice(1).forEach(r => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'invoice-item';
+        itemDiv.innerHTML = `
+            <span>${escapeHtml(r.querySelector(".name").value)}</span>
+            <span>${yen(+r.querySelector(".price").value)}</span>
+            <span>${r.querySelector(".qty").value}</span>
+            <span>${r.querySelector(".amount").textContent}</span>
+        `;
+        invoiceItems.appendChild(itemDiv);
+    });
+
+    document.getElementById('i_sub').textContent = document.getElementById('subTotal').textContent;
+    document.getElementById('i_tax').textContent = document.getElementById('taxTotal').textContent;
+    document.getElementById('i_total').textContent = document.getElementById('grandTotal').textContent;
+    document.getElementById('i_bank').textContent = document.getElementById('bankInfo').value;
+    document.getElementById('i_remark').textContent = document.getElementById('remark').value;
+}
+
+function downloadPDF(){
+    createInvoice();
+    window.print();
+}
+
+/* 页面加载时自动恢复 */
+window.onload = function(){
+    // 初期行を追加
+    const itemTable = document.getElementById('itemTable');
+    if(itemTable.rows.length === 1) {
+        addRow();
+    }
+    
+    // 日付の初期設定（今日の日付）
+    const today = new Date().toISOString().split('T')[0];
+    const invoiceDate = document.getElementById('invoiceDate');
+    if(!invoiceDate.value) invoiceDate.value = today;
+    
+    // 支払期限を30日後に設定
+    const dueDateObj = new Date();
+    dueDateObj.setDate(dueDateObj.getDate() + 30);
+    const dueDateInput = document.getElementById('dueDate');
+    if(!dueDateInput.value) dueDateInput.value = dueDateObj.toISOString().split('T')[0];
+};
+</script>
+
+</body>
+</html>
