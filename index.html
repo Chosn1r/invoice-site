@@ -384,18 +384,18 @@ th {
 .summary-wrapper {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;  /* 改这里：底部对齐 */
+    align-items: flex-end;
     margin-top: 20px;
     gap: 20px;
 }
 
 .tax-breakdown-container {
-    width: 45%;  
+    width: 45%;
     min-width: 280px;
 }
 
 .right-summary-container {
-    width:40%; 
+    width: 40%;
     min-width: 180px;
 }
 
@@ -421,7 +421,7 @@ th {
     padding: 8px 4px;
     text-align: right;
     font-weight: 500;
-    font-size: 12px; 
+    font-size: 12px;
     color: #06080a;
 }
 
@@ -556,7 +556,7 @@ th {
     width: 2.2cm;
     height: 2.2cm;
     object-fit: contain;
-    border-radius: 8px;  
+    border-radius: 8px;
 }
 
 .address-wrap {
@@ -595,11 +595,10 @@ th {
 
 .invoice-item {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
     padding: 8px 0;
     border-bottom: 1px solid #e2e8f0;
     align-items: center;
-    page-break-inside: avoid; 
+    page-break-inside: avoid;
 }
 
 .invoice-item.header {
@@ -614,20 +613,37 @@ th {
     padding: 0 8px;
 }
 
-/* 单价、数量、价格右对齐 */
-.invoice-item span:nth-child(2),
-.invoice-item span:nth-child(3),
-.invoice-item span:nth-child(4) {
+/* 默认列宽（无商品代码时4列） */
+.invoice-item.default-cols {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+}
+.invoice-item.code-cols {
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
+}
+
+/* 单価、数量、価格右对齐（适配4列和5列） */
+.invoice-item.default-cols span:nth-child(2),
+.invoice-item.default-cols span:nth-child(3),
+.invoice-item.default-cols span:nth-child(4) {
+    text-align: right;
+}
+.invoice-item.code-cols span:nth-child(3),
+.invoice-item.code-cols span:nth-child(4),
+.invoice-item.code-cols span:nth-child(5) {
     text-align: right;
 }
 
-/* 表头对齐数据行 */
 .invoice-item.header span:first-child {
     text-align: left;
 }
-.invoice-item.header span:nth-child(2),
-.invoice-item.header span:nth-child(3),
-.invoice-item.header span:nth-child(4) {
+.invoice-item.header.default-cols span:nth-child(2),
+.invoice-item.header.default-cols span:nth-child(3),
+.invoice-item.header.default-cols span:nth-child(4) {
+    text-align: right;
+}
+.invoice-item.header.code-cols span:nth-child(3),
+.invoice-item.header.code-cols span:nth-child(4),
+.invoice-item.header.code-cols span:nth-child(5) {
     text-align: right;
 }
 
@@ -680,14 +696,68 @@ button:active {
 }
 
 button.secondary {
-    background: #f1f5f9;
-    color: #1e293b;
+    background: #2563eb;
+    color: #ffffff;
     box-shadow: none;
 }
 button.secondary:hover {
-    background: #e2e8f0;
+    background: #1d4ed8;
 }
 
+
+/* ===== 商品一括追加モーダル ===== */
+.bulk-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.bulk-modal-backdrop.active {
+    display: flex;
+}
+
+.bulk-modal {
+    width: min(720px, 92vw);
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+}
+
+.bulk-modal h4 {
+    margin: 0 0 10px;
+    font-size: 18px;
+    color: #0f172a;
+}
+
+.bulk-modal p {
+    margin: 0 0 10px;
+    color: #475569;
+    font-size: 13px;
+}
+
+#bulkItemInput {
+    width: 100%;
+    min-height: 220px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    padding: 12px;
+    resize: vertical;
+}
+
+.bulk-modal-actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
 /* ===== 打印专用 ===== */
 @media print {
     .sidebar {
@@ -739,7 +809,7 @@ button.secondary:hover {
         margin-bottom: 16px;
     }
     .print-active .client-name-line {
-        font-size: 13pt; 
+        font-size: 13pt;
         font-weight: normal;
     }
     .print-active .client-name-line strong,
@@ -802,7 +872,6 @@ button.secondary:hover {
     .print-active .right-summary-container {
         visibility: visible;
     }
-    /* 隐藏旧的合计方框 (已删除，故无需额外处理) */
 }
 
 /* 我方会社名屏幕显示统一为18px，与对方公司名一致 */
@@ -927,15 +996,17 @@ button.secondary:hover {
             <h3>商品明細</h3>
             <div style="margin-bottom: 10px;">
                 <button onclick="manageItemList()">商品マスタ</button>
+                <button class="secondary" onclick="openBulkItemModal()">商品を一括追加</button>
             </div>
             <table id="itemTable">
                 <thead>
                     <tr>
+                        <th>商品コード</th>
                         <th>商品名</th>
                         <th id="priceHeader">単価</th>
                         <th>数量</th>
                         <th id="unitHeader" style="display: none;">単位</th>
-                        <th>消費税</th>
+                        <th>税区分</th>
                         <th id="amountHeader">価格</th>
                         <th>操作</th>
                     </tr>
@@ -943,7 +1014,7 @@ button.secondary:hover {
                 <tbody></tbody>
             </table>
             <button onclick="addRow()">＋ 商品追加</button>
-            
+
             <!-- 税率別内訳表 + 小計等を横並び（画面表示用） -->
             <div class="summary-wrapper">
                 <div class="tax-breakdown-container">
@@ -1144,14 +1215,16 @@ button.secondary:hover {
             <h3>商品明細</h3>
             <div style="margin-bottom: 10px;">
                 <button onclick="manageItemList()">商品マスタ</button>
+                <button class="secondary" onclick="openBulkItemModal()">商品を一括追加</button>
             </div>
             <table id="deliveryItemTable">
                 <thead>
                     <tr>
+                        <th>商品コード</th>
                         <th>商品名</th>
                         <th id="deliveryPriceHeader">単価</th>
                         <th>数量</th>
-                        <th>消費税</th>
+                        <th>税区分</th>
                         <th id="deliveryAmountHeader">価格</th>
                         <th>操作</th>
                     </tr>
@@ -1225,7 +1298,7 @@ button.secondary:hover {
                 <input type="number" id="defaultDueDays" min="0" value="30" style="width: 100px;">
             </div>
             <div class="form-row">
-                <label>新規商品のデフォルト税率</label>
+                <label>税区分</label>
                 <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                     <label><input type="radio" name="defaultTax" value="0.08"> 8%</label>
                     <label><input type="radio" name="defaultTax" value="0.10" checked> 10%</label>
@@ -1252,7 +1325,7 @@ button.secondary:hover {
                 </div>
             </div>
             <div class="form-row">
-                <label>税区分</label>
+                <label>外税.内税</label>
                 <div style="display: flex; gap: 15px;">
                     <label><input type="radio" name="taxType" value="exclusive" checked> 外税（税抜）</label>
                     <label><input type="radio" name="taxType" value="inclusive"> 内税（税込）</label>
@@ -1266,11 +1339,34 @@ button.secondary:hover {
                 <label>印影の表示</label>
                 <label><input type="checkbox" id="showStamp" checked> 印影を表示</label>
             </div>
+            <div class="form-row">
+                <label>商品コードの表示</label>
+                <label><input type="checkbox" id="showItemCode" checked> 印刷時に商品コードを表示する</label>
+            </div>
             <button onclick="saveInvoiceSettings()">設定を保存</button>
         </div>
     </div>
 </div>
 
+
+<!-- 商品一括追加モーダル -->
+<div id="bulkItemModal" class="bulk-modal-backdrop" onclick="if(event.target===this) closeBulkItemModal()">
+    <div class="bulk-modal">
+        <h4>商品を一括追加</h4>
+        <p>Excelファイル導入（列を自動認識）：商品コード / 商品名 / 単価 / 数量 / 税区分</p>
+        <div style="margin-bottom:10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input id="bulkExcelFile" type="file" accept=".xlsx,.xls,.csv,.tsv,text/csv" onchange="importExcelItems(this)">
+            <span style="font-size:12px; color:#64748b;">※ 1枚目シートを読み込みます</span>
+        </div>
+        <p>貼り付け：Tab / 半角「,」 / 全角「，」 / スペース区切り（1行1件：商品コード・商品名・単価・数量・税区分）</p>
+        <textarea id="bulkItemInput" placeholder="例（どれでも可）:\n131，耳机，2999，5，8%\nA001,サンプル,1200,1,10%\nB2	商品	980	2	0.08"></textarea>
+        <div class="bulk-modal-actions">
+            <button class="secondary" onclick="closeBulkItemModal()">キャンセル</button>
+            <button onclick="bulkAddItems()">貼り付けデータを登録</button>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 // 共用変数・関数
 let currentDoc = 'invoice'; // 現在のドキュメントタイプ
@@ -1283,6 +1379,7 @@ let invoiceSettings = {
     taxRoundingMethod: 'floor',    // 消費税の端数処理
     showUnit: true,               // 是否显示单位列
     showStamp: true,              // 印影表示
+    showItemCode: true,           // プレビューに商品コードを表示するか
     taxType: 'exclusive'          // 'exclusive' = 外税, 'inclusive' = 内税
 };
 
@@ -1291,7 +1388,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // 父级菜单点击展开/折叠
     const parentMenuItem = document.getElementById('invoice-parent');
     const subMenu = document.getElementById('invoice-submenu');
-    
+
     parentMenuItem.addEventListener('click', function(e) {
         e.stopPropagation();
         subMenu.classList.toggle('expanded');
@@ -1461,6 +1558,7 @@ function getItemList() {
 
 function saveItem(item) {
     let items = getItemList();
+    if (!item.code) item.code = '';
     const existingIndex = items.findIndex(i => i.name === item.name);
     if(existingIndex !== -1) {
         if(!confirm('同じ商品名が既に保存されています。上書きしますか？')) return false;
@@ -1484,7 +1582,8 @@ function manageItemList() {
     let message = '保存済み商品一覧：\n\n';
     items.forEach((item, index) => {
         const taxText = getTaxDisplayText(item.tax);
-        message += `${index + 1}. ${item.name} (単価(税抜): ${item.price}円, 税率: ${taxText})\n`;
+        const code = item.code || '(コードなし)';
+        message += `${index + 1}. [${code}] ${item.name} (単価(税抜): ${item.price}円, 税率: ${taxText})\n`;
     });
     message += '\n削除する番号を入力してください（キャンセルで終了）';
     const input = prompt(message);
@@ -1498,6 +1597,279 @@ function manageItemList() {
     } else alert('無効な番号です。');
 }
 
+
+function openBulkItemModal() {
+    const modal = document.getElementById('bulkItemModal');
+    if (!modal) return;
+    modal.classList.add('active');
+    const input = document.getElementById('bulkItemInput');
+    if (input) input.focus();
+}
+
+function closeBulkItemModal() {
+    const modal = document.getElementById('bulkItemModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+}
+
+function parseBulkTax(taxRaw) {
+    const tax = (taxRaw || '').toString().trim().toLowerCase();
+    if (!tax) return String(invoiceSettings.defaultTax || '0.10');
+
+    if (tax === '0.08' || tax === '8' || tax === '8%' || tax === '8％' || tax === '0.8' || tax === '0.80') return '0.08';
+    if (tax === '0.10' || tax === '0.1' || tax === '10' || tax === '10%' || tax === '10％' || tax === '1') return '0.10';
+
+    if (tax === 'exempt' || tax === '対象外' || tax === '免税') return 'exempt';
+    if (tax === 'non-taxable' || tax === '非課税') return 'non-taxable';
+    return null;
+}
+
+function normalizeImportHeader(text) {
+    return (text || '')
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[\s　]/g, '')
+        .replace(/[()（）]/g, '');
+}
+
+function detectImportColumns(headers) {
+    const map = {};
+    headers.forEach((h, idx) => {
+        const key = normalizeImportHeader(h);
+        if (key.includes('商品コード') || key === 'code') map.code = idx;
+        else if (key.includes('商品名') || key.includes('品名') || key === 'name') map.name = idx;
+        else if (key.includes('単価') || key === 'unitprice' || key === 'price') map.price = idx;
+        else if (key.includes('数量') || key === 'qty' || key === 'quantity') map.qty = idx;
+        else if (key.includes('税区分') || key.includes('税率') || key === 'tax') map.tax = idx;
+    });
+    return map;
+}
+
+function parseImportNumber(value) {
+    if (value === null || value === undefined) return NaN;
+    const cleaned = String(value).replace(/[\s,円￥]/g, '').trim();
+    if (!cleaned) return NaN;
+    return parseFloat(cleaned);
+}
+
+function removePlaceholderRowsForCurrentDoc() {
+    const isDelivery = currentDoc === 'delivery';
+    const table = document.getElementById(isDelivery ? 'deliveryItemTable' : 'itemTable');
+    if (!table) return;
+
+    const rows = [...table.rows].slice(1);
+    rows.forEach(r => {
+        const codeInput = r.querySelector(isDelivery ? '.d-code' : '.code');
+        const nameInput = r.querySelector(isDelivery ? '.d-name' : '.name');
+        const priceInput = r.querySelector(isDelivery ? '.d-price' : '.price');
+
+        const code = (codeInput?.value || '').trim();
+        const name = (nameInput?.value || '').trim();
+        const price = parseImportNumber(priceInput?.value || '');
+
+        if (!code && !name && (Number.isNaN(price) || price <= 0)) {
+            r.remove();
+        }
+    });
+}
+
+function applyImportedItemsToRows(items) {
+    if (!items.length) {
+        return false;
+    }
+
+    removePlaceholderRowsForCurrentDoc();
+
+    for (const item of items) {
+        const rowData = {
+            code: item.code || '',
+            name: item.name,
+            price: item.price,
+            qty: item.qty,
+            tax: item.tax
+        };
+
+        if (currentDoc === 'delivery') addDeliveryRowWithData(rowData);
+        else addRowWithData(rowData);
+    }
+
+    if (currentDoc === 'delivery') {
+        calculateDelivery();
+        createDelivery();
+    } else {
+        calculate();
+        createInvoice();
+    }
+
+    return true;
+}
+function parseImportedMatrix(matrix) {
+    if (!Array.isArray(matrix) || matrix.length < 2) return [];
+
+    const headerRow = matrix[0] || [];
+    const colMap = detectImportColumns(headerRow);
+
+    // 必須列: 商品コード / 商品名 / 単価 / 数量 / 税区分
+    const requiredMissing = [];
+    if (colMap.code === undefined) requiredMissing.push('商品コード');
+    if (colMap.name === undefined) requiredMissing.push('商品名');
+    if (colMap.price === undefined) requiredMissing.push('単価');
+    if (colMap.qty === undefined) requiredMissing.push('数量');
+    if (colMap.tax === undefined) requiredMissing.push('税区分');
+
+    if (requiredMissing.length > 0) {
+        alert(`Excel列が不足しています: ${requiredMissing.join('、')}`);
+        return [];
+    }
+
+    const rows = [];
+    for (let i = 1; i < matrix.length; i++) {
+        const row = matrix[i] || [];
+        const name = String(row[colMap.name] || '').trim();
+        if (!name) continue;
+
+        const code = String(row[colMap.code] || '').trim();
+        const qtyNum = parseImportNumber(row[colMap.qty]);
+        const qty = !Number.isNaN(qtyNum) && qtyNum > 0 ? qtyNum : 1;
+
+        const tax = parseBulkTax(row[colMap.tax]);
+        if (!tax) continue;
+
+        const price = parseImportNumber(row[colMap.price]);
+        if (Number.isNaN(price) || price <= 0) continue;
+
+        rows.push({ code, name, qty, tax, price });
+    }
+
+    return rows;
+}
+function importExcelItems(fileInput) {
+    const file = fileInput && fileInput.files ? fileInput.files[0] : null;
+    if (!file) return;
+
+    if (typeof XLSX === 'undefined') {
+        alert('Excel読込ライブラリの読み込みに失敗しました。');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[firstSheetName];
+            const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+            const imported = parseImportedMatrix(matrix);
+            const ok = applyImportedItemsToRows(imported);
+            if (!ok) {
+                fileInput.value = '';
+                return;
+            }
+
+            alert(`Excel導入が完了しました。\n取込: ${imported.length}件`);
+            fileInput.value = '';
+            closeBulkItemModal();
+        } catch (err) {
+            console.error(err);
+            alert('Excelファイルの読み込みに失敗しました。列名をご確認ください。');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function splitBulkLineParts(line) {
+    const s = (line || '').trim();
+    if (!s) return [];
+
+    if (s.includes('\t')) {
+        return s.split(/\t+/).map(v => v.trim()).filter(Boolean);
+    }
+
+    if (/[,，]/.test(s)) {
+        return s.split(/[,，]+/).map(v => v.trim()).filter(Boolean);
+    }
+
+    return s.split(/\s+/).map(v => v.trim()).filter(Boolean);
+}
+
+function parseBulkLine(line, lineIndex) {
+    const rawParts = splitBulkLineParts(line);
+
+    if (rawParts.length < 3) return { skip: true };
+
+    if (lineIndex === 0) {
+        const h0 = normalizeImportHeader(rawParts[0] || '');
+        const h1 = normalizeImportHeader(rawParts[1] || '');
+        const h2 = normalizeImportHeader(rawParts[2] || '');
+        const headerHit =
+            h0.includes('商品コード') || h0 === 'code' ||
+            h1.includes('商品名') || h1 === 'name' ||
+            h2.includes('単価');
+        if (headerHit) return { skip: true };
+    }
+
+    let code = '';
+    let name = '';
+    let priceText = '';
+    let qtyText = '';
+    let taxText = '';
+
+    if (rawParts.length >= 3) {
+        code = rawParts[0];
+        name = rawParts[1];
+        priceText = rawParts[2];
+        qtyText = rawParts[3] || '1';
+        taxText = rawParts[4] || '';
+    }
+
+    const price = parseImportNumber(priceText);
+    const qtyNum = parseImportNumber(qtyText);
+    const qty = !Number.isNaN(qtyNum) && qtyNum > 0 ? qtyNum : 1;
+    const tax = parseBulkTax(taxText);
+
+    if (!name || Number.isNaN(price) || price <= 0 || !tax) {
+        return { skip: true };
+    }
+
+    return {
+        skip: false,
+        item: { code, name, price, qty, tax }
+    };
+}
+
+function bulkAddItems() {
+    const input = document.getElementById('bulkItemInput');
+    if (!input) return;
+
+    const raw = input.value || '';
+    const lines = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (lines.length === 0) {
+        alert('一括追加データを入力してください。');
+        return;
+    }
+
+    const imported = [];
+    let skipped = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+        const parsed = parseBulkLine(lines[i], i);
+        if (parsed.skip || !parsed.item) {
+            skipped++;
+            continue;
+        }
+        imported.push(parsed.item);
+    }
+
+    const ok = applyImportedItemsToRows(imported);
+    if (!ok) return;
+
+    alert(`貼り付けデータ登録が完了しました。\n取込: ${imported.length}件\nスキップ: ${skipped}件`);
+    input.value = '';
+    closeBulkItemModal();
+}
 function showItemDropdown(inputElement, row) {
     const items = getItemList();
     let dropdown = row.querySelector('.item-dropdown');
@@ -1516,8 +1888,9 @@ function showItemDropdown(inputElement, row) {
     let html = '';
     items.forEach(item => {
         const taxText = getTaxDisplayText(item.tax);
+        const codeDisplay = item.code ? `[${item.code}] ` : '';
         html += `<div class="item-dropdown-item" data-id="${item.id}">
-                    <div class="item-name">${escapeHtml(item.name)}</div>
+                    <div class="item-name">${escapeHtml(codeDisplay + item.name)}</div>
                     <div class="item-detail">単価(税抜): ${item.price}円 | 税率: ${taxText}</div>
                 </div>`;
     });
@@ -1528,11 +1901,12 @@ function showItemDropdown(inputElement, row) {
             const id = parseInt(this.dataset.id);
             const item = items.find(i => i.id === id);
             if (item) {
+                const codeInput = row.querySelector('.code, .d-code');
                 const nameInput = row.querySelector('.name, .d-name');
                 const priceInput = row.querySelector('.price, .d-price');
                 const taxSelect = row.querySelector('.tax, .d-tax');
+                if (codeInput) codeInput.value = item.code || '';
                 if (nameInput) nameInput.value = item.name;
-                // 根据当前税区分决定填充的单价
                 if (priceInput) {
                     if (invoiceSettings.taxType === 'exclusive') {
                         priceInput.value = item.price;
@@ -1554,15 +1928,17 @@ function showItemDropdown(inputElement, row) {
 function saveRow(btn) {
     const row = btn.closest('tr');
     if (!row) return;
-    
+
+    const codeInput = row.querySelector('.code, .d-code');
     const nameInput = row.querySelector('.name, .d-name');
     const priceInput = row.querySelector('.price, .d-price');
     const taxSelect = row.querySelector('.tax, .d-tax');
-    
+
+    let code = codeInput ? codeInput.value.trim() : '';
     let name = nameInput ? nameInput.value.trim() : '';
     let price = priceInput ? parseFloat(priceInput.value) : 0;
     let tax = taxSelect ? taxSelect.value : 0.10;
-    
+
     if (!name) {
         alert('商品名を入力してください。');
         return;
@@ -1571,8 +1947,7 @@ function saveRow(btn) {
         alert('有効な単価を入力してください。');
         return;
     }
-    
-    // 保存到主数据时统一存储不含税单价
+
     let priceExclusive = price;
     if (invoiceSettings.taxType === 'inclusive') {
         const taxRate = getTaxRate(tax);
@@ -1581,7 +1956,6 @@ function saveRow(btn) {
         } else {
             priceExclusive = price;
         }
-        // 使用明細行端数処理取整
         const lineRound = invoiceSettings.lineRoundingMethod;
         if (lineRound === 'floor') priceExclusive = Math.floor(priceExclusive);
         else if (lineRound === 'ceil') priceExclusive = Math.ceil(priceExclusive);
@@ -1589,41 +1963,40 @@ function saveRow(btn) {
     }
     const item = {
         id: Date.now(),
+        code: code,
         name: name,
         price: priceExclusive,
         tax: tax
     };
-    
+
     saveItem(item);
 }
 
 // ========== 請求書関連 ==========
-// 税率別集計を更新する関数（画面表示用とプレビュー用の両方を更新）
 function updateTaxBreakdown() {
     const itemTable = document.getElementById('itemTable');
     const lineRounding = invoiceSettings.lineRoundingMethod;
     const taxRounding = invoiceSettings.taxRoundingMethod;
     const taxType = invoiceSettings.taxType;
-    
-    // 税率ごとの集計オブジェクト
-    const taxMap = new Map(); // key: 税率表示用文字列, value: { rate: 数値, exclusiveTotal, taxTotal, inclusiveTotal }
-    
+
+    const taxMap = new Map();
+
     [...itemTable.rows].slice(1).forEach(r => {
         let price = +r.querySelector(".price")?.value || 0;
         let qty = +r.querySelector(".qty")?.value || 0;
         let taxValue = r.querySelector(".tax")?.value;
         let taxRate = getTaxRate(taxValue);
         const taxKey = getTaxDisplayText(taxValue);
-        
+
         let exclusiveForRow = 0, taxForRow = 0, inclusiveForRow = 0;
-        
+
         if (taxType === 'exclusive') {
             const rawSub = price * qty;
             let roundedSub;
             if (lineRounding === 'ceil') roundedSub = Math.ceil(rawSub);
             else if (lineRounding === 'round') roundedSub = Math.round(rawSub);
             else roundedSub = Math.floor(rawSub);
-            
+
             exclusiveForRow = roundedSub;
             if (taxRate > 0) {
                 const rawTax = roundedSub * taxRate;
@@ -1640,7 +2013,7 @@ function updateTaxBreakdown() {
             if (lineRounding === 'ceil') inclusiveForRow = Math.ceil(inclusiveRaw);
             else if (lineRounding === 'round') inclusiveForRow = Math.round(inclusiveRaw);
             else inclusiveForRow = Math.floor(inclusiveRaw);
-            
+
             if (taxRate > 0) {
                 let rawEx = inclusiveForRow / (1 + taxRate);
                 let ex;
@@ -1654,7 +2027,7 @@ function updateTaxBreakdown() {
                 taxForRow = 0;
             }
         }
-        
+
         if (!taxMap.has(taxKey)) {
             taxMap.set(taxKey, { rate: taxRate, exclusiveTotal: 0, taxTotal: 0, inclusiveTotal: 0 });
         }
@@ -1663,14 +2036,12 @@ function updateTaxBreakdown() {
         entry.taxTotal += taxForRow;
         entry.inclusiveTotal += inclusiveForRow;
     });
-    
-    // ソート: 10%, 8%, 対象外, 非課税 の順
+
     const order = ['10%', '8%', '対象外', '非課税'];
     const sorted = Array.from(taxMap.entries()).sort((a, b) => {
         return order.indexOf(a[0]) - order.indexOf(b[0]);
     });
-    
-    // 更新画面表示用内訳表
+
     const tbody = document.getElementById('taxBreakdownBody');
     tbody.innerHTML = '';
     for (let [key, data] of sorted) {
@@ -1683,8 +2054,7 @@ function updateTaxBreakdown() {
         `;
         tbody.appendChild(tr);
     }
-    
-    // 更新预览区内訳表
+
     const previewTbody = document.getElementById('previewTaxBreakdownBody');
     if (previewTbody) {
         previewTbody.innerHTML = '';
@@ -1707,21 +2077,21 @@ function calculate(){
     const lineRounding = invoiceSettings.lineRoundingMethod;
     const taxRounding = invoiceSettings.taxRoundingMethod;
     const taxType = invoiceSettings.taxType;
-    
+
     [...itemTable.rows].slice(1).forEach(r => {
         let price = +r.querySelector(".price")?.value || 0;
         let qty = +r.querySelector(".qty")?.value || 0;
         let taxValue = r.querySelector(".tax")?.value;
         let taxRate = getTaxRate(taxValue);
         let amount, taxAmount;
-        
+
         if (taxType === 'exclusive') {
             const rawSubtotal = price * qty;
             let roundedSubtotal;
             if (lineRounding === 'ceil') roundedSubtotal = Math.ceil(rawSubtotal);
             else if (lineRounding === 'round') roundedSubtotal = Math.round(rawSubtotal);
             else roundedSubtotal = Math.floor(rawSubtotal);
-            
+
             if (taxRate === 0) {
                 taxAmount = 0;
                 amount = roundedSubtotal;
@@ -1739,7 +2109,7 @@ function calculate(){
             if (lineRounding === 'ceil') amount = Math.ceil(inclusiveRaw);
             else if (lineRounding === 'round') amount = Math.round(inclusiveRaw);
             else amount = Math.floor(inclusiveRaw);
-            
+
             if (taxRate === 0) {
                 taxAmount = 0;
                 sub += amount;
@@ -1761,11 +2131,9 @@ function calculate(){
     const total = (taxType === 'exclusive') ? sub + tax : sub;
     document.getElementById('grandTotal').textContent = yen(total);
     document.getElementById('displayTotal').textContent = yen(total);
-    
-    // 税率別内訳を更新
+
     updateTaxBreakdown();
-    
-    // 更新右侧消费税标签文字
+
     const taxLabelRight = document.getElementById('taxLabelRight');
     if (taxLabelRight) {
         taxLabelRight.innerText = taxType === 'exclusive' ? '消費税額合計' : 'うち消費税額合計';
@@ -1778,15 +2146,17 @@ function addRowWithData(data) {
     const defaultTax = invoiceSettings.defaultTax;
     const showUnit = invoiceSettings.showUnit;
     const taxType = invoiceSettings.taxType;
-    
+
     let pricePlaceholder = (taxType === 'exclusive') ? '税抜単価' : '税込単価';
     let initPrice = data.price || 0;
     let taxValue = data.tax !== undefined ? data.tax : defaultTax;
-    
+    let codeValue = data.code || '';
+
     if (showUnit) {
         r.innerHTML = `
+        <td><input class="code" type="text" placeholder="商品コード" value="${escapeHtml(codeValue)}"></td>
         <td style="position: relative;"><input class="name" type="text" placeholder="商品名" value="${escapeHtml(data.name || '')}" autocomplete="off"></td>
-        <td><input type="number" class="price" min="0" placeholder="${pricePlaceholder}" value="${initPrice}" step="any"></td>   
+        <td><input type="number" class="price" min="0" placeholder="${pricePlaceholder}" value="${initPrice}" step="any"></td>
         <td><input type="number" class="qty" min="1" placeholder="1" value="${data.qty || 1}"></td>
         <td><input type="text" class="unit" placeholder="単位" value="${data.unit || '個'}"></td>
         <td>
@@ -1804,8 +2174,9 @@ function addRowWithData(data) {
         </td>`;
     } else {
         r.innerHTML = `
+        <td><input class="code" type="text" placeholder="商品コード" value="${escapeHtml(codeValue)}"></td>
         <td style="position: relative;"><input class="name" type="text" placeholder="商品名" value="${escapeHtml(data.name || '')}" autocomplete="off"></td>
-        <td><input type="number" class="price" min="0" placeholder="${pricePlaceholder}" value="${initPrice}" step="any"></td>   
+        <td><input type="number" class="price" min="0" placeholder="${pricePlaceholder}" value="${initPrice}" step="any"></td>
         <td><input type="number" class="qty" min="1" placeholder="1" value="${data.qty || 1}"></td>
         <td>
             <select class="tax">
@@ -1819,9 +2190,9 @@ function addRowWithData(data) {
         <td>
             <button class="save-btn" onclick="saveRow(this)">保存</button>
             <button class="delete-btn" onclick="deleteRow(this)">削除</button>
-        </tr>`;
+        </td>`;
     }
-    
+
     const nameInput = r.querySelector('.name');
     nameInput.addEventListener('mousedown', function(e) {
         e.stopPropagation();
@@ -1830,7 +2201,7 @@ function addRowWithData(data) {
         document.querySelectorAll('.item-dropdown.active').forEach(d => d.classList.remove('active'));
         showItemDropdown(this, r);
     });
-    
+
     r.querySelectorAll("input,select").forEach(e => e.oninput = calculate);
     calculate();
 }
@@ -1850,28 +2221,28 @@ function deleteRow(btn){
     }
 }
 
-// 刷新表格，保留数据
 function refreshItemTable() {
     const itemTable = document.getElementById('itemTable');
     const rows = [...itemTable.rows].slice(1);
     const data = rows.map(r => {
+        const code = r.querySelector('.code')?.value || '';
         const name = r.querySelector('.name')?.value || '';
         const price = parseFloat(r.querySelector('.price')?.value) || 0;
         const qty = parseInt(r.querySelector('.qty')?.value) || 1;
         const tax = r.querySelector('.tax')?.value;
         const unit = r.querySelector('.unit')?.value || '';
-        return { name, price, qty, tax, unit };
+        return { code, name, price, qty, tax, unit };
     });
-    
+
     while (itemTable.rows.length > 1) {
         itemTable.deleteRow(1);
     }
-    
+
     const unitHeader = document.getElementById('unitHeader');
     if (unitHeader) {
         unitHeader.style.display = invoiceSettings.showUnit ? 'table-cell' : 'none';
     }
-    
+
     const priceHeader = document.getElementById('priceHeader');
     const amountHeader = document.getElementById('amountHeader');
     if (priceHeader) {
@@ -1880,7 +2251,7 @@ function refreshItemTable() {
     if (amountHeader) {
         amountHeader.innerText = invoiceSettings.taxType === 'exclusive' ? '価格（税抜）' : '価格（税込）';
     }
-    
+
     if (data.length === 0) {
         addRowWithData({});
     } else {
@@ -1889,9 +2260,8 @@ function refreshItemTable() {
 }
 
 function createInvoice(){
-    calculate(); // 内部调用updateTaxBreakdown
-    
-    // 基本情報反映
+    calculate();
+
     document.getElementById('i_client').textContent = document.getElementById('clientName').value;
     document.getElementById('i_clientSuffix').textContent = document.getElementById('clientSuffix').value;
     document.getElementById('i_clientAddress').textContent = document.getElementById('clientAddress').value;
@@ -1912,26 +2282,46 @@ function createInvoice(){
 
     document.getElementById('i_image').style.display = invoiceSettings.showStamp ? 'block' : 'none';
 
-    const invoiceTable = document.getElementById('invoiceTable');
+    const showCode = invoiceSettings.showItemCode;
     const priceHeaderText = invoiceSettings.taxType === 'exclusive' ? '単価（税抜）' : '単価（税込）';
     const amountHeaderText = invoiceSettings.taxType === 'exclusive' ? '価格（税抜）' : '価格（税込）';
-    invoiceTable.innerHTML = `<thead><tr><th>商品名</th><th>${priceHeaderText}</th><th>数量</th><th>${amountHeaderText}</th></tr></thead><tbody></tbody>`;
-    
+
+    const invoiceTable = document.getElementById('invoiceTable');
+    if (showCode) {
+        invoiceTable.innerHTML = `<thead><tr><th>商品コード</th><th>商品名</th><th>${priceHeaderText}</th><th>数量</th><th>${amountHeaderText}</th></tr></thead><tbody></tbody>`;
+    } else {
+        invoiceTable.innerHTML = `<thead><tr><th>商品名</th><th>${priceHeaderText}</th><th>数量</th><th>${amountHeaderText}</th></tr></thead><tbody></tbody>`;
+    }
+
     const previewPriceHeader = document.getElementById('previewPriceHeader');
     const previewAmountHeader = document.getElementById('previewAmountHeader');
     if (previewPriceHeader) previewPriceHeader.innerText = priceHeaderText;
     if (previewAmountHeader) previewAmountHeader.innerText = amountHeaderText;
-    
+
     const itemTable = document.getElementById('itemTable');
     [...itemTable.rows].slice(1).forEach(r=>{
+        const code = r.querySelector(".code")?.value || '';
+        const name = r.querySelector(".name").value;
+        const price = +r.querySelector(".price").value;
         const qty = r.querySelector(".qty").value;
         const unit = r.querySelector(".unit") ? r.querySelector(".unit").value : '';
         const qtyDisplay = invoiceSettings.showUnit && unit ? qty + unit : qty;
-        invoiceTable.insertRow().innerHTML = `
-        <td>${escapeHtml(r.querySelector(".name").value)}</td>
-        <td>${yen(+r.querySelector(".price").value)}</td>
-        <td>${qtyDisplay}</td>
-        <td>${r.querySelector(".amount").textContent}</td>`;
+        const amountText = r.querySelector(".amount").textContent;
+
+        if (showCode) {
+            invoiceTable.insertRow().innerHTML = `
+            <td>${escapeHtml(code)}</td>
+            <td>${escapeHtml(name)}</td>
+            <td>${yen(price)}</td>
+            <td>${qtyDisplay}</td>
+            <td>${amountText}</td>`;
+        } else {
+            invoiceTable.insertRow().innerHTML = `
+            <td>${escapeHtml(name)}</td>
+            <td>${yen(price)}</td>
+            <td>${qtyDisplay}</td>
+            <td>${amountText}</td>`;
+        }
     });
 
     const invoiceItems = document.getElementById('invoiceItems');
@@ -1939,34 +2329,62 @@ function createInvoice(){
 
     const headerDiv = document.createElement('div');
     headerDiv.className = 'invoice-item header';
-    headerDiv.innerHTML = `
-        <span>商品名</span>
-        <span>${priceHeaderText}</span>
-        <span>数量</span>
-        <span>${amountHeaderText}</span>
-    `;
+    if (showCode) {
+        headerDiv.classList.add('code-cols');
+        headerDiv.innerHTML = `
+            <span>商品コード</span>
+            <span>商品名</span>
+            <span>${priceHeaderText}</span>
+            <span>数量</span>
+            <span>${amountHeaderText}</span>
+        `;
+    } else {
+        headerDiv.classList.add('default-cols');
+        headerDiv.innerHTML = `
+            <span>商品名</span>
+            <span>${priceHeaderText}</span>
+            <span>数量</span>
+            <span>${amountHeaderText}</span>
+        `;
+    }
     invoiceItems.appendChild(headerDiv);
 
     [...itemTable.rows].slice(1).forEach(r => {
+        const code = r.querySelector(".code")?.value || '';
+        const name = r.querySelector(".name").value;
+        const price = +r.querySelector(".price").value;
         const qty = r.querySelector(".qty").value;
         const unit = r.querySelector(".unit") ? r.querySelector(".unit").value : '';
         const qtyDisplay = invoiceSettings.showUnit && unit ? qty + unit : qty;
+        const amountText = r.querySelector(".amount").textContent;
+
         const itemDiv = document.createElement('div');
         itemDiv.className = 'invoice-item';
-        itemDiv.innerHTML = `
-            <span>${escapeHtml(r.querySelector(".name").value)}</span>
-            <span>${yen(+r.querySelector(".price").value)}</span>
-            <span>${qtyDisplay}</span>
-            <span>${r.querySelector(".amount").textContent}</span>
-        `;
+        if (showCode) {
+            itemDiv.classList.add('code-cols');
+            itemDiv.innerHTML = `
+                <span>${escapeHtml(code)}</span>
+                <span>${escapeHtml(name)}</span>
+                <span>${yen(price)}</span>
+                <span>${qtyDisplay}</span>
+                <span>${amountText}</span>
+            `;
+        } else {
+            itemDiv.classList.add('default-cols');
+            itemDiv.innerHTML = `
+                <span>${escapeHtml(name)}</span>
+                <span>${yen(price)}</span>
+                <span>${qtyDisplay}</span>
+                <span>${amountText}</span>
+            `;
+        }
         invoiceItems.appendChild(itemDiv);
     });
 
-    // 更新预览区右侧小计等
     const subVal = document.getElementById('subTotal').textContent;
     const taxVal = document.getElementById('taxTotal').textContent;
     const totalVal = document.getElementById('grandTotal').textContent;
-    
+
     document.getElementById('i_sub_preview').textContent = subVal;
     document.getElementById('i_tax_preview').textContent = taxVal;
     document.getElementById('i_total_preview').textContent = totalVal;
@@ -1977,7 +2395,7 @@ function createInvoice(){
 
     document.getElementById('bankSection').style.display = 'block';
     document.getElementById('remarkSection').style.display = 'block';
-    
+
     document.getElementById('invoice').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -1988,21 +2406,21 @@ function calculateDelivery(){
     const lineRounding = invoiceSettings.lineRoundingMethod;
     const taxRounding = invoiceSettings.taxRoundingMethod;
     const taxType = invoiceSettings.taxType;
-    
+
     [...itemTable.rows].slice(1).forEach(r => {
         let price = +r.querySelector(".d-price")?.value || 0;
         let qty = +r.querySelector(".d-qty")?.value || 0;
         let taxValue = r.querySelector(".d-tax")?.value;
         let taxRate = getTaxRate(taxValue);
         let amount;
-        
+
         if (taxType === 'exclusive') {
             const rawSub = price * qty;
             let roundedSub;
             if (lineRounding === 'ceil') roundedSub = Math.ceil(rawSub);
             else if (lineRounding === 'round') roundedSub = Math.round(rawSub);
             else roundedSub = Math.floor(rawSub);
-            
+
             if (taxRate === 0) {
                 amount = roundedSub;
             } else {
@@ -2032,7 +2450,9 @@ function addDeliveryRowWithData(data) {
     const taxType = invoiceSettings.taxType;
     const pricePlaceholder = (taxType === 'exclusive') ? '税抜単価' : '税込単価';
     let taxValue = data.tax !== undefined ? data.tax : defaultTax;
+    let codeValue = data.code || '';
     r.innerHTML = `
+        <td><input class="d-code" type="text" placeholder="商品コード" value="${escapeHtml(codeValue)}"></td>
         <td style="position: relative;"><input class="d-name" type="text" placeholder="商品名" value="${escapeHtml(data.name || '')}" autocomplete="off"></td>
         <td><input type="number" class="d-price" min="0" placeholder="${pricePlaceholder}" value="${data.price || 0}" step="any"></td>
         <td><input type="number" class="d-qty" min="1" placeholder="1" value="${data.qty || 1}"></td>
@@ -2072,13 +2492,14 @@ function refreshDeliveryItemTable() {
     const table = document.getElementById('deliveryItemTable');
     const rows = [...table.rows].slice(1);
     const data = rows.map(r => ({
+        code: r.querySelector('.d-code')?.value || '',
         name: r.querySelector('.d-name')?.value || '',
         price: parseFloat(r.querySelector('.d-price')?.value) || 0,
         qty: parseInt(r.querySelector('.d-qty')?.value) || 1,
         tax: r.querySelector('.d-tax')?.value
     }));
     while (table.rows.length > 1) table.deleteRow(1);
-    
+
     const priceHeader = document.getElementById('deliveryPriceHeader');
     const amountHeader = document.getElementById('deliveryAmountHeader');
     if (priceHeader) {
@@ -2087,7 +2508,7 @@ function refreshDeliveryItemTable() {
     if (amountHeader) {
         amountHeader.innerText = invoiceSettings.taxType === 'exclusive' ? '価格（税抜）' : '価格（税込）';
     }
-    
+
     if (data.length === 0) addDeliveryRowWithData({});
     else data.forEach(d => addDeliveryRowWithData(d));
 }
@@ -2110,25 +2531,32 @@ function createDelivery() {
         document.getElementById('d_image').src = '';
     }
 
-    const previewTable = document.getElementById('deliveryPreviewTable');
+    const showCode = invoiceSettings.showItemCode;
     const priceHeaderText = invoiceSettings.taxType === 'exclusive' ? '単価（税抜）' : '単価（税込）';
     const amountHeaderText = invoiceSettings.taxType === 'exclusive' ? '価格（税抜）' : '価格（税込）';
-    previewTable.innerHTML = `<thead><tr><th>商品名</th><th>${priceHeaderText}</th><th>数量</th><th>消費税</th><th>${amountHeaderText}</th></tr></thead><tbody></tbody>`;
+
+    const previewTable = document.getElementById('deliveryPreviewTable');
+    if (showCode) {
+        previewTable.innerHTML = `<thead><tr><th>商品コード</th><th>商品名</th><th>${priceHeaderText}</th><th>数量</th><th>消費税</th><th>${amountHeaderText}</th></tr></thead><tbody></tbody>`;
+    } else {
+        previewTable.innerHTML = `<thead><tr><th>商品名</th><th>${priceHeaderText}</th><th>数量</th><th>消費税</th><th>${amountHeaderText}</th></tr></thead><tbody></tbody>`;
+    }
 
     const itemTable = document.getElementById('deliveryItemTable');
     let total = 0;
     const lineRounding = invoiceSettings.lineRoundingMethod;
     const taxRounding = invoiceSettings.taxRoundingMethod;
     const taxType = invoiceSettings.taxType;
-    
+
     [...itemTable.rows].slice(1).forEach(r => {
+        const code = r.querySelector('.d-code')?.value || '';
         const name = r.querySelector('.d-name').value;
         const price = +r.querySelector('.d-price').value || 0;
         const qty = +r.querySelector('.d-qty').value || 0;
         const taxValue = r.querySelector('.d-tax').value;
         const taxRate = getTaxRate(taxValue);
         let amount, taxAmount;
-        
+
         if (taxType === 'exclusive') {
             const rawSub = price * qty;
             let roundedSub;
@@ -2161,13 +2589,25 @@ function createDelivery() {
             }
         }
         total += amount;
-        previewTable.insertRow().innerHTML = `
-            <td>${escapeHtml(name)}</td>
-            <td>${yen(price)}</td>
-            <td>${qty}</td>
-            <td>${getTaxDisplayText(taxValue)}</td>
-            <td>${yen(amount)}</td>
-        `;
+
+        if (showCode) {
+            previewTable.insertRow().innerHTML = `
+                <td>${escapeHtml(code)}</td>
+                <td>${escapeHtml(name)}</td>
+                <td>${yen(price)}</td>
+                <td>${qty}</td>
+                <td>${getTaxDisplayText(taxValue)}</td>
+                <td>${yen(amount)}</td>
+            `;
+        } else {
+            previewTable.insertRow().innerHTML = `
+                <td>${escapeHtml(name)}</td>
+                <td>${yen(price)}</td>
+                <td>${qty}</td>
+                <td>${getTaxDisplayText(taxValue)}</td>
+                <td>${yen(amount)}</td>
+            `;
+        }
     });
     document.getElementById('d_totalAmount').textContent = yen(total);
     document.getElementById('deliveryPreview').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -2194,14 +2634,14 @@ function loadInvoiceSettings() {
         invoiceSettings = JSON.parse(saved);
     }
     document.getElementById('defaultDueDays').value = invoiceSettings.defaultDueDays;
-    
+
     const taxRadios = document.getElementsByName('defaultTax');
     for (let radio of taxRadios) {
         if (radio.value == invoiceSettings.defaultTax) {
             radio.checked = true;
         }
     }
-    
+
     const lineRadios = document.getElementsByName('lineRoundingMethod');
     for (let radio of lineRadios) {
         if (radio.value === invoiceSettings.lineRoundingMethod) {
@@ -2214,7 +2654,7 @@ function loadInvoiceSettings() {
             radio.checked = true;
         }
     }
-    
+
     const taxTypeRadios = document.getElementsByName('taxType');
     for (let radio of taxTypeRadios) {
         if (radio.value === invoiceSettings.taxType) {
@@ -2223,7 +2663,8 @@ function loadInvoiceSettings() {
     }
     document.getElementById('showUnit').checked = invoiceSettings.showUnit;
     document.getElementById('showStamp').checked = invoiceSettings.showStamp;
-    
+    document.getElementById('showItemCode').checked = invoiceSettings.showItemCode;
+
     if (currentDoc === 'invoice') {
         refreshItemTable();
         createInvoice();
@@ -2244,15 +2685,16 @@ function saveInvoiceSettings() {
     invoiceSettings.taxType = taxTypeRadio.value;
     invoiceSettings.showUnit = document.getElementById('showUnit').checked;
     invoiceSettings.showStamp = document.getElementById('showStamp').checked;
+    invoiceSettings.showItemCode = document.getElementById('showItemCode').checked;
     localStorage.setItem('invoiceSettings', JSON.stringify(invoiceSettings));
-    
+
     if (currentDoc === 'invoice') {
         refreshItemTable();
         createInvoice();
     } else if (currentDoc === 'delivery') {
         refreshDeliveryItemTable();
     }
-    
+
     alert('設定を保存しました。');
 }
 
@@ -2263,7 +2705,7 @@ function saveClientInfo() {
         alert('会社名／個人名を入力してください。');
         return;
     }
-    
+
     const clientData = {
         id: Date.now(),
         name: name,
@@ -2271,9 +2713,9 @@ function saveClientInfo() {
         address: document.getElementById('clientAddress').value,
         savedDate: new Date().toLocaleString('ja-JP')
     };
-    
+
     let clients = getClientList();
-    
+
     const existingIndex = clients.findIndex(c => c.name === clientData.name);
     if(existingIndex !== -1) {
         if(!confirm('同じ名前が既に保存されています。上書きしますか？')) {
@@ -2281,7 +2723,7 @@ function saveClientInfo() {
         }
         clients.splice(existingIndex, 1);
     }
-    
+
     clients.push(clientData);
     localStorage.setItem('clientList', JSON.stringify(clients));
     alert('取引先情報を保存しました。\n会社名をクリックすると選択できます。');
@@ -2296,28 +2738,28 @@ function getClientList() {
 function showClientDropdown() {
     const clients = getClientList();
     const dropdown = document.getElementById('clientDropdown');
-    
+
     if(clients.length === 0) {
         dropdown.innerHTML = '<div class="company-dropdown-item" style="color:#64748b;">保存済み取引先はありません</div>';
         dropdown.classList.add('active');
         return;
     }
-    
-    clients.sort((a, b) => b.id - a.id); 
-    
+
+    clients.sort((a, b) => b.id - a.id);
+
     let html = '';
     clients.forEach(c => {
         html += `
             <div class="company-dropdown-item" onclick="selectClient(${c.id})">
                 <div class="company-name">${escapeHtml(c.name)}</div>
                 <div class="company-detail">
-                    ${escapeHtml(c.suffix)} | 
+                    ${escapeHtml(c.suffix)} |
                     ${escapeHtml(c.address ? c.address.substring(0, 20) + (c.address.length > 20 ? '…' : '') : '住所なし')}
                 </div>
             </div>
         `;
     });
-    
+
     dropdown.innerHTML = html;
     dropdown.classList.add('active');
 }
@@ -2325,13 +2767,13 @@ function showClientDropdown() {
 function selectClient(id) {
     const clients = getClientList();
     const client = clients.find(c => c.id === id);
-    
+
     if(client) {
         document.getElementById('clientName').value = client.name || '';
         document.getElementById('clientSuffix').value = client.suffix || '御中';
         document.getElementById('clientAddress').value = client.address || '';
     }
-    
+
     document.getElementById('clientDropdown').classList.remove('active');
 }
 
@@ -2342,7 +2784,7 @@ function saveClientInfoDelivery() {
         alert('会社名／個人名を入力してください。');
         return;
     }
-    
+
     const clientData = {
         id: Date.now(),
         name: name,
@@ -2350,9 +2792,9 @@ function saveClientInfoDelivery() {
         address: document.getElementById('clientAddressDelivery').value,
         savedDate: new Date().toLocaleString('ja-JP')
     };
-    
+
     let clients = getClientList();
-    
+
     const existingIndex = clients.findIndex(c => c.name === clientData.name);
     if(existingIndex !== -1) {
         if(!confirm('同じ名前が既に保存されています。上書きしますか？')) {
@@ -2360,7 +2802,7 @@ function saveClientInfoDelivery() {
         }
         clients.splice(existingIndex, 1);
     }
-    
+
     clients.push(clientData);
     localStorage.setItem('clientList', JSON.stringify(clients));
     alert('取引先情報を保存しました。\n会社名をクリックすると選択できます。');
@@ -2370,28 +2812,28 @@ function saveClientInfoDelivery() {
 function showClientDropdownDelivery() {
     const clients = getClientList();
     const dropdown = document.getElementById('clientDropdownDelivery');
-    
+
     if(clients.length === 0) {
         dropdown.innerHTML = '<div class="company-dropdown-item" style="color:#64748b;">保存済み取引先はありません</div>';
         dropdown.classList.add('active');
         return;
     }
-    
-    clients.sort((a, b) => b.id - a.id); 
-    
+
+    clients.sort((a, b) => b.id - a.id);
+
     let html = '';
     clients.forEach(c => {
         html += `
             <div class="company-dropdown-item" onclick="selectClientDelivery(${c.id})">
                 <div class="company-name">${escapeHtml(c.name)}</div>
                 <div class="company-detail">
-                    ${escapeHtml(c.suffix)} | 
+                    ${escapeHtml(c.suffix)} |
                     ${escapeHtml(c.address ? c.address.substring(0, 20) + (c.address.length > 20 ? '…' : '') : '住所なし')}
                 </div>
             </div>
         `;
     });
-    
+
     dropdown.innerHTML = html;
     dropdown.classList.add('active');
 }
@@ -2399,13 +2841,13 @@ function showClientDropdownDelivery() {
 function selectClientDelivery(id) {
     const clients = getClientList();
     const client = clients.find(c => c.id === id);
-    
+
     if(client) {
         document.getElementById('clientNameDelivery').value = client.name || '';
         document.getElementById('clientSuffixDelivery').value = client.suffix || '御中';
         document.getElementById('clientAddressDelivery').value = client.address || '';
     }
-    
+
     document.getElementById('clientDropdownDelivery').classList.remove('active');
 }
 
@@ -2416,7 +2858,7 @@ function saveCompanyInfo(){
         alert('会社名を入力してください。');
         return;
     }
-    
+
     const companyData = {
         id: Date.now(),
         myCompany: myCompany.value,
@@ -2427,9 +2869,9 @@ function saveCompanyInfo(){
         remark: document.getElementById('remark').value,
         savedDate: new Date().toLocaleString('ja-JP')
     };
-    
+
     let companies = getCompanyList();
-    
+
     const existingIndex = companies.findIndex(c => c.myCompany === companyData.myCompany);
     if(existingIndex !== -1) {
         if(!confirm('同じ会社名が既に保存されています。上書きしますか？')) {
@@ -2437,10 +2879,10 @@ function saveCompanyInfo(){
         }
         companies.splice(existingIndex, 1);
     }
-    
+
     companies.push(companyData);
     localStorage.setItem("companyList", JSON.stringify(companies));
-    
+
     alert('我方会社情報を保存しました。\n会社名をクリックすると選択できます。');
     document.getElementById('myCompanyDropdown').classList.remove('active');
 }
@@ -2453,28 +2895,28 @@ function getCompanyList() {
 function showCompanyDropdown() {
     const companies = getCompanyList();
     const dropdown = document.getElementById('myCompanyDropdown');
-    
+
     if(companies.length === 0) {
         dropdown.innerHTML = '<div class="company-dropdown-item" style="color:#64748b;">保存済み会社はありません</div>';
         dropdown.classList.add('active');
         return;
     }
-    
+
     companies.sort((a, b) => b.id - a.id);
-    
+
     let html = '';
     companies.forEach(company => {
         html += `
             <div class="company-dropdown-item" onclick="selectCompany(${company.id})">
                 <div class="company-name">${escapeHtml(company.myCompany)}</div>
                 <div class="company-detail">
-                    ${escapeHtml(company.regNumber || '登録番号なし')} | 
+                    ${escapeHtml(company.regNumber || '登録番号なし')} |
                     ${escapeHtml(company.myPhone || '電話なし')}
                 </div>
             </div>
         `;
     });
-    
+
     dropdown.innerHTML = html;
     dropdown.classList.add('active');
 }
@@ -2482,7 +2924,7 @@ function showCompanyDropdown() {
 function selectCompany(id) {
     const companies = getCompanyList();
     const company = companies.find(c => c.id === id);
-    
+
     if(company) {
         document.getElementById('myCompany').value = company.myCompany || '';
         document.getElementById('regNumber').value = company.regNumber || '';
@@ -2491,7 +2933,7 @@ function selectCompany(id) {
         document.getElementById('bankInfo').value = company.bankInfo || '';
         document.getElementById('remark').value = company.remark || '';
     }
-    
+
     document.getElementById('myCompanyDropdown').classList.remove('active');
 }
 
@@ -2502,7 +2944,7 @@ function saveCompanyInfoDelivery(){
         alert('会社名を入力してください。');
         return;
     }
-    
+
     const companyData = {
         id: Date.now(),
         myCompany: myCompany.value,
@@ -2512,9 +2954,9 @@ function saveCompanyInfoDelivery(){
         remark: document.getElementById('remarkDelivery').value,
         savedDate: new Date().toLocaleString('ja-JP')
     };
-    
+
     let companies = getCompanyList();
-    
+
     const existingIndex = companies.findIndex(c => c.myCompany === companyData.myCompany);
     if(existingIndex !== -1) {
         if(!confirm('同じ会社名が既に保存されています。上書きしますか？')) {
@@ -2522,10 +2964,10 @@ function saveCompanyInfoDelivery(){
         }
         companies.splice(existingIndex, 1);
     }
-    
+
     companies.push(companyData);
     localStorage.setItem("companyList", JSON.stringify(companies));
-    
+
     alert('我方会社情報を保存しました。\n会社名をクリックすると選択できます。');
     document.getElementById('myCompanyDropdownDelivery').classList.remove('active');
 }
@@ -2533,28 +2975,28 @@ function saveCompanyInfoDelivery(){
 function showCompanyDropdownDelivery() {
     const companies = getCompanyList();
     const dropdown = document.getElementById('myCompanyDropdownDelivery');
-    
+
     if(companies.length === 0) {
         dropdown.innerHTML = '<div class="company-dropdown-item" style="color:#64748b;">保存済み会社はありません</div>';
         dropdown.classList.add('active');
         return;
     }
-    
+
     companies.sort((a, b) => b.id - a.id);
-    
+
     let html = '';
     companies.forEach(company => {
         html += `
             <div class="company-dropdown-item" onclick="selectCompanyDelivery(${company.id})">
                 <div class="company-name">${escapeHtml(company.myCompany)}</div>
                 <div class="company-detail">
-                    ${escapeHtml(company.regNumber || '登録番号なし')} | 
+                    ${escapeHtml(company.regNumber || '登録番号なし')} |
                     ${escapeHtml(company.myPhone || '電話なし')}
                 </div>
             </div>
         `;
     });
-    
+
     dropdown.innerHTML = html;
     dropdown.classList.add('active');
 }
@@ -2562,7 +3004,7 @@ function showCompanyDropdownDelivery() {
 function selectCompanyDelivery(id) {
     const companies = getCompanyList();
     const company = companies.find(c => c.id === id);
-    
+
     if(company) {
         document.getElementById('myCompanyDelivery').value = company.myCompany || '';
         document.getElementById('regNumberDelivery').value = company.regNumber || '';
@@ -2570,28 +3012,28 @@ function selectCompanyDelivery(id) {
         document.getElementById('myPhoneDelivery').value = company.myPhone || '';
         document.getElementById('remarkDelivery').value = company.remark || '';
     }
-    
+
     document.getElementById('myCompanyDropdownDelivery').classList.remove('active');
 }
 
 // ========== 共通の管理関数 ==========
 function manageClientList() {
     const clients = getClientList();
-    
+
     if(clients.length === 0) {
         alert('保存済みの取引先はありません。');
         return;
     }
-    
+
     let message = '保存済み取引先一覧：\n\n';
     clients.forEach((c, index) => {
         message += `${index + 1}. ${c.name} (${c.suffix})\n`;
     });
     message += '\n削除する番号を入力してください（キャンセルで終了）';
-    
+
     const input = prompt(message);
     if(input === null) return;
-    
+
     const index = parseInt(input) - 1;
     if(index >= 0 && index < clients.length) {
         if(confirm(`「${clients[index].name}」を削除しますか？`)) {
@@ -2606,21 +3048,21 @@ function manageClientList() {
 
 function manageCompanyList() {
     const companies = getCompanyList();
-    
+
     if(companies.length === 0) {
         alert('保存済みの会社はありません。');
         return;
     }
-    
+
     let message = '保存済み会社一覧：\n\n';
     companies.forEach((c, index) => {
         message += `${index + 1}. ${c.myCompany} (${c.regNumber || '登録番号なし'})\n`;
     });
     message += '\n削除する番号を入力してください（キャンセルで終了）';
-    
+
     const input = prompt(message);
     if(input === null) return;
-    
+
     const index = parseInt(input) - 1;
     if(index >= 0 && index < companies.length) {
         if(confirm(`「${companies[index].myCompany}」を削除しますか？`)) {
@@ -2716,20 +3158,20 @@ window.onload = function(){
     if(deliveryTable.rows.length === 1) {
         addDeliveryRow();
     }
-    
+
     const today = new Date().toISOString().split('T')[0];
     const invoiceDate = document.getElementById('invoiceDate');
     if(!invoiceDate.value) invoiceDate.value = today;
     const deliveryDate = document.getElementById('deliveryDate');
     if(!deliveryDate.value) deliveryDate.value = today;
-    
+
     const dueDateInput = document.getElementById('dueDate');
     if(!dueDateInput.value && invoiceSettings.defaultDueDays > 0) {
         const dueDateObj = new Date();
         dueDateObj.setDate(dueDateObj.getDate() + invoiceSettings.defaultDueDays);
         dueDateInput.value = dueDateObj.toISOString().split('T')[0];
     }
-    
+
     if (currentDoc === 'invoice') {
         createInvoice();
     }
@@ -2738,3 +3180,4 @@ window.onload = function(){
 
 </body>
 </html>
+
